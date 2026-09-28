@@ -1,0 +1,55 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/users'
+order: 2000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Status is 200 OK
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      // Test 2: Response is an array
+      pm.test("Response is an array", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.be.an("array");
+      });
+
+      // Test 3: Array is not empty
+      pm.test("Response array is not empty", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData.length).to.be.greaterThan(0);
+      });
+
+      // Test 4: Each user has required fields
+      pm.test("Each user has required fields (_id, fullName, email)", function () {
+          const jsonData = pm.response.json();
+          jsonData.forEach(function (user) {
+              pm.expect(user).to.have.property("_id");
+              pm.expect(user).to.have.property("fullName");
+              pm.expect(user).to.have.property("email");
+          });
+      });
+
+      // Test 5: Newly created user (Jane Doe) is present in the list
+      pm.test("Newly created user Jane Doe is in the list", function () {
+          const jsonData = pm.response.json();
+          const found = jsonData.some(function (user) {
+              return user.email === "jane.doe@example.com";
+          });
+          pm.expect(found).to.be.true;
+      });
+
+      // Test 6: Results are sorted by createdAt (descending - newest first)
+      pm.test("Users are sorted by creation date", function () {
+          const jsonData = pm.response.json();
+          if (jsonData.length > 1) {
+              for (let i = 0; i < jsonData.length - 1; i++) {
+                  const current = new Date(jsonData[i].createdAt);
+                  const next = new Date(jsonData[i + 1].createdAt);
+                  pm.expect(current.getTime()).to.be.at.least(next.getTime());
+              }
+          }
+      });

@@ -1,0 +1,50 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/users'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "fullName": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "phone": "1234567890"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Status is 201 Created
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+
+      // Test 2: Response has JSON body
+      pm.test("Response is JSON", function () {
+          pm.response.to.be.json;
+      });
+
+      // Test 3: Response contains _id
+      pm.test("Response contains _id", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("_id");
+          pm.expect(jsonData._id).to.be.a("string");
+      });
+
+      // Test 4: Response contains correct fullName and email
+      pm.test("Response contains correct user data", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData.fullName).to.eql("Jane Doe");
+          pm.expect(jsonData.email).to.eql("jane.doe@example.com");
+          pm.expect(jsonData.phone).to.eql("1234567890");
+      });
+
+      // Save _id to collection variable for use in later requests
+      if (pm.response.code === 201) {
+          const jsonData = pm.response.json();
+          pm.collectionVariables.set("userId", jsonData._id);
+          console.log("Saved userId:", jsonData._id);
+      }
