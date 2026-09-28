@@ -1,0 +1,62 @@
+$kind: http-request
+method: GET
+url: '{{baseUrl}}/claims'
+order: 4000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Status is 200 OK
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      // Test 2: Response is an array
+      pm.test("Response is an array", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.be.an("array");
+      });
+
+      // Test 3: Array is not empty
+      pm.test("Response array is not empty", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData.length).to.be.greaterThan(0);
+      });
+
+      // Test 4: Each claim has required fields
+      pm.test("Each claim has required fields", function () {
+          const jsonData = pm.response.json();
+          jsonData.forEach(function (claim) {
+              pm.expect(claim).to.have.property("_id");
+              pm.expect(claim).to.have.property("userId");
+              pm.expect(claim).to.have.property("claimType");
+              pm.expect(claim).to.have.property("amount");
+              pm.expect(claim).to.have.property("description");
+              pm.expect(claim).to.have.property("createdAt");
+          });
+      });
+
+      // Test 5: userId is populated as a nested object (not a raw string)
+      pm.test("userId is populated as a nested object with fullName and email", function () {
+          const jsonData = pm.response.json();
+          jsonData.forEach(function (claim) {
+              pm.expect(claim.userId).to.be.an("object");
+              pm.expect(claim.userId).to.have.property("_id");
+              pm.expect(claim.userId).to.have.property("fullName");
+              pm.expect(claim.userId).to.have.property("email");
+          });
+      });
+
+      // Test 6: Verify the newly created claim for Jane Doe is present
+      pm.test("Claim for Jane Doe is present with correct data", function () {
+          const jsonData = pm.response.json();
+          const found = jsonData.some(function (claim) {
+              return (
+                  claim.userId &&
+                  claim.userId.email === "jane.doe@example.com" &&
+                  claim.claimType === "Auto" &&
+                  claim.amount === 1500.50
+              );
+          });
+          pm.expect(found).to.be.true;
+      });

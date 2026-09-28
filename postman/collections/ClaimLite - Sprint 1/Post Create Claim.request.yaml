@@ -1,0 +1,58 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/claims'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": "{{userId}}",
+      "claimType": "Auto",
+      "amount": 1500.50,
+      "description": "Fender bender on main street."
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Status is 201 Created
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+
+      // Test 2: Response is JSON
+      pm.test("Response is JSON", function () {
+          pm.response.to.be.json;
+      });
+
+      // Test 3: Response contains _id
+      pm.test("Response contains _id", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("_id");
+          pm.expect(jsonData._id).to.be.a("string");
+      });
+
+      // Test 4: Response contains correct claim data
+      pm.test("Response contains correct claim data", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData.claimType).to.eql("Auto");
+          pm.expect(jsonData.amount).to.eql(1500.50);
+          pm.expect(jsonData.description).to.eql("Fender bender on main street.");
+      });
+
+      // Test 5: userId is linked correctly
+      pm.test("Claim is linked to the correct userId", function () {
+          const jsonData = pm.response.json();
+          const savedUserId = pm.collectionVariables.get("userId");
+          pm.expect(jsonData.userId).to.eql(savedUserId);
+      });
+
+      // Save claimId for future use
+      if (pm.response.code === 201) {
+          const jsonData = pm.response.json();
+          pm.collectionVariables.set("claimId", jsonData._id);
+          console.log("Saved claimId:", jsonData._id);
+      }
