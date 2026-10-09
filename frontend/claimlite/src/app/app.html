@@ -1,0 +1,92 @@
+<div class="container">
+  <h1>ClaimLite Insurance</h1>
+
+  <div class="stats">
+    <div class="stat-box">
+      <label>Total Users</label>
+      <div class="value">{{ users.length }}</div>
+    </div>
+    <div class="stat-box">
+      <label>Total Claims</label>
+      <div class="value">{{ claims.length }}</div>
+    </div>
+    <div class="stat-box">
+      <label>Total Amount</label>
+      <div class="value">{{ formatCurrency(totalClaimValue()) }}</div>
+    </div>
+  </div>
+
+  <div class="msg-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="msg-success" *ngIf="infoMessage">{{ infoMessage }}</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Add User</h2>
+      <form [formGroup]="userForm" (ngSubmit)="submitUser()">
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" formControlName="fullName" placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" placeholder="john@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone (10 digits)</label>
+          <input id="phone" type="tel" formControlName="phone" placeholder="9876543210" />
+        </div>
+        <button type="submit" [disabled]="userForm.invalid">Save User</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Submit Claim</h2>
+      <form [formGroup]="claimForm" (ngSubmit)="submitClaim()">
+        <div class="form-group">
+          <label for="userId">Select User</label>
+          <select id="userId" formControlName="userId">
+            <option value="" disabled>-- Select User --</option>
+            <option *ngFor="let u of users" [value]="u._id">
+              {{ u.fullName }} ({{ u.email }})
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="claimType">Claim Type</label>
+          <select id="claimType" formControlName="claimType">
+            <option value="Auto">Auto</option>
+            <option value="Home">Home</option>
+            <option value="Health">Health</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="amount">Amount ($)</label>
+          <input id="amount" type="number" formControlName="amount" min="0.01" step="0.01" placeholder="500.00" />
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" formControlName="description" rows="3" placeholder="Describe claim reason"></textarea>
+        </div>
+        <button type="submit" [disabled]="claimForm.invalid">Submit Claim</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Claims</h2>
+    <div *ngIf="claims.length === 0" style="color: #64748b;">No claims registered yet.</div>
+    <div class="claim-list" *ngIf="claims.length > 0">
+      <div class="claim-card" *ngFor="let c of claims">
+        <div>
+          <span class="claim-type">{{ c.claimType }}</span>
+          <div style="font-weight: 600;">{{ getUserName(c.userId) }}</div>
+          <div style="font-size: 0.88rem; color: #64748b;">{{ c.description }}</div>
+        </div>
+        <div class="claim-amount">
+          {{ formatCurrency(c.amount || 0) }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
